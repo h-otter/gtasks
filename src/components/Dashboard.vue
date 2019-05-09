@@ -15,6 +15,14 @@
             label="Title"
             required
           ></v-text-field>
+
+          <!-- state TOOD: default valueがない -->
+          <v-select
+            v-model="tasks[viewingTaskID].state"
+            :items="status"
+            label="State"
+          ></v-select>
+
           <v-textarea
             v-model="tasks[viewingTaskID].description"
             label="Description"
@@ -84,21 +92,17 @@
       </v-list>
     </v-navigation-drawer> -->
 
-    <v-navigation-drawer
-      temporary
-      v-model="left"
-      fixed
-    ></v-navigation-drawer>
-
     <v-content>
       <v-container fluid fill-height>
         <v-layout justify-left align-top>
-          <svg width="300" height="300">
+          <svg width="3000" height="3000">
             <!-- <task></task> -->
             <task v-for="(value, id) in tasks"
               :key="id"
-              :vxy="[id, 0]"
+              :vxy="vCoordinate[id]"
               v-on:mouseOver="updateViewingTask(id)"
+              v-on:click="toggleIsSelected(id)"
+              v-bind:isSelected="isSelected && viewingTaskID == id"
             ></task>
             <!-- month line -->
             <!-- dependency line -->
@@ -122,13 +126,6 @@
         </v-layout>
       </v-container>
     </v-content>
-
-    <v-navigation-drawer
-      right
-      temporary
-      v-model="right"
-      fixed
-    ></v-navigation-drawer>
   </v-app>
 </div>
 </template>
@@ -142,9 +139,12 @@ export default {
     Task,
   },
   data: () => ({
+    status: ["ToDo", "Doing", "Done"],
+
     tasks: {
       1: {
         title: "testing",
+        state: "Doing",
         labels: {
           "test-label": "hoge",
         },
@@ -154,6 +154,7 @@ export default {
       },
       2: {
         title: "changed",
+        state: "Done",
         labels: {
           "test-label": "hoge",
         },
@@ -162,16 +163,18 @@ export default {
         dependsOn: [],
       },
     },
-    vCoordinate: {},
+    vCoordinate: {
+      1: [0, 0],
+      2: [1, 0],
+    },
 
     drawerLeft: false,
     drawerRight: true,
-    right: null,
-    left: null,
 
     // right drawer
     menu: false,
     viewingTaskID: 1,
+    isSelected: false,
   }),
 
   props: {
@@ -180,6 +183,9 @@ export default {
   methods: {
     updateViewingTask: function (id) {
       this.viewingTaskID = id
+    },
+    toggleIsSelected: function (id) {
+      this.isSelected = !this.isSelected
     },
   }
 }
