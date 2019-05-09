@@ -72,6 +72,7 @@
       <!-- <v-toolbar-side-icon @click.stop="drawerLeft = !drawerLeft"></v-toolbar-side-icon> -->
       <!-- <v-toolbar-title>Toolbar</v-toolbar-title> -->
       <v-spacer></v-spacer>
+      <!-- plus: add task -->
       <v-toolbar-side-icon @click.stop="drawerRight = !drawerRight"></v-toolbar-side-icon>
     </v-toolbar>
 
@@ -95,17 +96,25 @@
     <v-content>
       <v-container fluid fill-height>
         <v-layout justify-left align-top>
-          <svg width="3000" height="3000">
-            <!-- <task></task> -->
-            <task v-for="(value, id) in tasks"
+          <svg :width="this.graphWidth" :height="this.graphHeight">
+            <!-- tasks -->
+            <task-circle v-for="(value, id) in tasks"
               :key="id"
-              :vxy="vCoordinate[id]"
+              :radius="circleRadius"
+              v-bind:x="tasks[id].x"
+              v-bind:y="tasks[id].y"
               v-on:mouseOver="updateViewingTask(id)"
               v-on:click="toggleIsSelected(id)"
               v-bind:isSelected="isSelected && viewingTaskID == id"
-            ></task>
-            <!-- month line -->
+              v-bind:color="stateToColor(tasks[id].state)"
+            ></task-circle>
             <!-- dependency line -->
+            <task-path v-for="(points, index) in paths"
+              :key="index"
+              v-bind:points="points"
+            ></task-path>
+
+            <!-- month line -->
           </svg>
 
 <!-- 
@@ -131,20 +140,34 @@
 </template>
 
 <script>
-import Task from "./Task";
+import TaskCircle from "./TaskCircle";
+import TaskPath from "./TaskPath";
 
 export default {
   name: 'Dashboard',
   components: {
-    Task,
+    TaskCircle,
+    TaskPath,
   },
   data: () => ({
+    
     status: ["ToDo", "Doing", "Done"],
-
     tasks: {
       1: {
         title: "testing",
         state: "Doing",
+        labels: {
+          "test-label": "hoge",
+        },
+        description: "foobar",
+        dueDate: new Date().toISOString().substr(0, 10),
+        dependsOn: [
+          2,
+        ],
+      },
+      3: {
+        title: "ToDo",
+        state: "ToDo",
         labels: {
           "test-label": "hoge",
         },
@@ -163,10 +186,12 @@ export default {
         dependsOn: [],
       },
     },
-    vCoordinate: {
-      1: [0, 0],
-      2: [1, 0],
-    },
+    paths: [],
+
+    circleMargin: 5,
+    circleRadius: 15,
+    graphWidth: 100,
+    graphHeight: 100,
 
     drawerLeft: false,
     drawerRight: true,
@@ -176,18 +201,68 @@ export default {
     viewingTaskID: 1,
     isSelected: false,
   }),
-
   props: {
     source: String
   },
   methods: {
     updateViewingTask: function (id) {
-      this.viewingTaskID = id
+      if (!this.isSelected) {
+        this.viewingTaskID = id
+      }
     },
     toggleIsSelected: function (id) {
       this.isSelected = !this.isSelected
     },
-  }
+    stateToColor: function(state) {
+      switch (state) {
+      case "ToDo":
+        return "#ffff00"
+      case "Doing":
+        return "#ff0000"
+      case "Done":
+        return "#00ffff"
+      }
+    },
+    setGraphCoordinate: function() {
+      var dagre = require("dagre");
+      var g = new dagre.graphlib.Graph();
+      g.setGraph({});
+      g.setDefaultEdgeLabel(function() { return {}; });
+
+      // g.setParent(month+"-"+category, month);
+
+      var l = 2 * this.circleRadius + 10
+      for (var n in this.tasks) {
+        g.setNode(n, { label: this.tasks[n].title, width: l, height: l });
+
+        // g.setParent(n, month+"-"+category);
+
+        for (var e of this.tasks[n].dependsOn) {
+          g.setEdge(e, n)
+        }
+      }
+
+      dagre.layout(g);
+
+      for (var n of g.nodes()) {
+        this.tasks[n].x = g.node(n).x
+        this.tasks[n].y = g.node(n).y
+        console.log("Node " + n + ": " + JSON.stringify(this.tasks[n]));
+      }
+
+      this.paths = []
+      for (var e of g.edges()) {
+        this.paths.push(g.edge(e).points)
+        console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(g.edge(e)));
+      }
+
+      this.graphWidth = g.graph().width
+      this.graphHeight = g.graph().height
+    }
+  },
+  mounted: function() {
+    this.setGraphCoordinate()
+  },
 }
 </script>
 

@@ -2,31 +2,28 @@
   <!-- <circle r=15 cx=20 cy=20 v-on:click="" v-on:mouseover=""></circle> -->
   <circle 
     :r="radius"
-    :cx="(1 + 2 * vxy[0]) * (margin + radius)"
-    :cy="(1 + 2 * vxy[1]) * (margin + radius)"
+    :cx="x"
+    :cy="y"
     :class="{'selected': isSelected}"
     v-on:mouseover="$emit('mouseOver', key)"
     v-on:click="$emit('click', key)"
+    v-bind:style="{'fill': color}"
   ></circle>
 </template>
 
 <script>
 export default {
-  name: "task",
+  name: "task-circle",
   data() {
-    return {
-      margin: 5,
-      radius: 15,
-    // state: "doing",
-
-    };
+    return {};
   },
   props: {
-    // key: Number,
-    // やはりvxyをうける必要はない、このコンポーネントからロジックは切り離す
-    vxy: Array,
+    radius: Number,
+    x: Number,
+    y: Number,
 
     isSelected: Boolean,
+    color: String,
   },
 };
 </script>
