@@ -14,6 +14,7 @@
             v-model="tasks[viewingTaskID].title"
             label="Title"
             required
+            :disabled="!isSelected"
           ></v-text-field>
 
           <!-- state TOOD: default valueがない -->
@@ -21,12 +22,14 @@
             v-model="tasks[viewingTaskID].state"
             :items="status"
             label="State"
+            :disabled="!isSelected"
           ></v-select>
 
           <v-textarea
             v-model="tasks[viewingTaskID].description"
             label="Description"
             auto-grow
+            :disabled="!isSelected"
           ></v-textarea>
           <v-menu
             ref="menu"
@@ -39,6 +42,7 @@
             offset-y
             full-width
             min-width="290px"
+            :disabled="!isSelected"
           >
             <template v-slot:activator="{ on }">
               <v-text-field
@@ -46,6 +50,7 @@
                 label="Due date"
                 clearable
                 readonly
+                :disabled="!isSelected"
                 v-on="on"
               ></v-text-field>
             </template>

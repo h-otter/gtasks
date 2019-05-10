@@ -1,6 +1,6 @@
 # gtasks
 
-A ToDo application which shows as graph
+A ToDo application which shows tasks as graph
 
 ## How to develop
 
