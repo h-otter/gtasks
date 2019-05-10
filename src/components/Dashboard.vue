@@ -56,6 +56,7 @@
             </v-date-picker>
           </v-menu>
 
+          <!-- category -->
           <!-- labels -->
           <!-- depends on -->
         </v-container>
@@ -69,37 +70,23 @@
       app
       clipped-right
     >
-      <!-- <v-toolbar-side-icon @click.stop="drawerLeft = !drawerLeft"></v-toolbar-side-icon> -->
-      <!-- <v-toolbar-title>Toolbar</v-toolbar-title> -->
       <v-spacer></v-spacer>
       <!-- plus: add task -->
       <v-toolbar-side-icon @click.stop="drawerRight = !drawerRight"></v-toolbar-side-icon>
     </v-toolbar>
 
-    <!-- <v-navigation-drawer
-      fixed
-      v-model="drawerLeft"
-      app
-    >
-      <v-list dense>
-        <v-list-tile @click.stop="left = !left">
-          <v-list-tile-action>
-            <v-icon>exit_to_app</v-icon>
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title>Open Temporary Drawer</v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
-      </v-list>
-    </v-navigation-drawer> -->
-
     <v-content>
       <v-container fluid fill-height>
         <v-layout justify-left align-top>
           <svg :width="this.graphWidth" :height="this.graphHeight">
+            <!-- dependency line -->
+            <task-path v-for="(points, index) in paths"
+              :key="'task-path-'+index"
+              v-bind:points="points"
+            ></task-path>
             <!-- tasks -->
             <task-circle v-for="(value, id) in tasks"
-              :key="id"
+              :key="'task-circle-'+id"
               :radius="circleRadius"
               v-bind:x="tasks[id].x"
               v-bind:y="tasks[id].y"
@@ -108,30 +95,9 @@
               v-bind:isSelected="isSelected && viewingTaskID == id"
               v-bind:color="stateToColor(tasks[id].state)"
             ></task-circle>
-            <!-- dependency line -->
-            <task-path v-for="(points, index) in paths"
-              :key="index"
-              v-bind:points="points"
-            ></task-path>
 
             <!-- month line -->
           </svg>
-
-<!-- 
-          <v-flex shrink>
-            <v-tooltip right>
-              <v-btn
-                icon
-                large
-                :href="source"
-                target="_blank"
-                slot="activator"
-              >
-                <v-icon large>code</v-icon>
-              </v-btn>
-              <span>Source</span>
-            </v-tooltip>
-          </v-flex> -->
         </v-layout>
       </v-container>
     </v-content>
@@ -150,12 +116,12 @@ export default {
     TaskPath,
   },
   data: () => ({
-    
     status: ["ToDo", "Doing", "Done"],
     tasks: {
       1: {
         title: "testing",
         state: "Doing",
+        // category: "",
         labels: {
           "test-label": "hoge",
         },
@@ -173,7 +139,9 @@ export default {
         },
         description: "foobar",
         dueDate: new Date().toISOString().substr(0, 10),
-        dependsOn: [],
+        dependsOn: [
+          2,
+        ],
       },
       2: {
         title: "changed",
@@ -212,6 +180,10 @@ export default {
     },
     toggleIsSelected: function (id) {
       this.isSelected = !this.isSelected
+
+      if (this.isSelected) {
+        this.viewingTaskID = id
+      }
     },
     stateToColor: function(state) {
       switch (state) {
@@ -244,7 +216,7 @@ export default {
 
       dagre.layout(g);
 
-      for (var n of g.nodes()) {
+      for (var n in this.tasks) {
         this.tasks[n].x = g.node(n).x
         this.tasks[n].y = g.node(n).y
         console.log("Node " + n + ": " + JSON.stringify(this.tasks[n]));
@@ -258,6 +230,11 @@ export default {
 
       this.graphWidth = g.graph().width
       this.graphHeight = g.graph().height
+
+      // check this is DAG
+      // try {
+      //   console.log(dagre.graphlib.alg.topsort(g))
+      // } catch(error) {}
     }
   },
   mounted: function() {

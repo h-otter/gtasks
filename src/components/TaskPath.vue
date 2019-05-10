@@ -26,7 +26,8 @@ export default {
 
 <style>
 path {
+  fill: none;
   stroke: #333;
-  stroke-width: 1px;
+  stroke-width: 2px;
 }
 </style>
