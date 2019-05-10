@@ -200,6 +200,12 @@ export default {
         return "#00ffff"
       }
     },
+    // addDependency: function() {
+      // check this is DAG
+      // try {
+      //   console.log(dagre.graphlib.alg.topsort(g))
+      // } catch(error) {}
+    // },
     setGraphCoordinate: function() {
       var dagre = require("dagre");
       var g = new dagre.graphlib.Graph();
@@ -224,22 +230,17 @@ export default {
       for (var n in this.tasks) {
         this.tasks[n].x = g.node(n).x
         this.tasks[n].y = g.node(n).y
-        console.log("Node " + n + ": " + JSON.stringify(this.tasks[n]));
+        // console.log("Node " + n + ": " + JSON.stringify(this.tasks[n]));
       }
 
       this.paths = []
       for (var e of g.edges()) {
         this.paths.push(g.edge(e).points)
-        console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(g.edge(e)));
+        // console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(g.edge(e)));
       }
 
       this.graphWidth = g.graph().width
       this.graphHeight = g.graph().height
-
-      // check this is DAG
-      // try {
-      //   console.log(dagre.graphlib.alg.topsort(g))
-      // } catch(error) {}
     }
   },
   mounted: function() {

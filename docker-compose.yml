@@ -1,9 +1,19 @@
-version: '2'
+version: '3'
 services:
-  app:
-    build: .
+  ui:
+    build: ui/
     command: yarn serve
     ports:
       - '1234:8080'
     volumes:
-      - ./:/app
+      - ./ui/:/app
+  
+  api:
+    build: api/
+    command: gtasks-api
+    ports:
+      - '2345:2345'
+    volumes:
+      - ./sandbox/db:/db
+
+  # web:
