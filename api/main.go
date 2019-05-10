@@ -14,11 +14,12 @@ import (
 
 type Task struct {
 	ID          int               `json:"id"`
+	Title       string            `json:"title"`
 	State       string            `json:"state"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Description string            `json:"description,omitempty"`
-	DueDate     string            `json:"due_date,omitempty"`
-	DependsOn   []int             `json:"depends_on,omitempty"`
+	DueDate     string            `json:"dueDate,omitempty"`
+	DependsOn   []int             `json:"dependsOn,omitempty"`
 }
 
 type TaskHandler struct {
@@ -163,6 +164,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// for debug
+	e.Use(middleware.CORS())
+
 	h, err := CreateTaskHandler("db")
 	if err != nil {
 		panic(err)
@@ -173,5 +177,5 @@ func main() {
 	e.PUT("/api/task/:id", h.UpdateTask())
 	e.DELETE("/api/task/:id", h.DeleteTask())
 
-	e.Start(":2345")
+	e.Start(":8080")
 }

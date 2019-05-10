@@ -1,19 +1,16 @@
 version: '3'
 services:
   ui:
-    build: ui/
-    command: yarn serve
+    build: .
     ports:
-      - '1234:8080'
+      - '12345:80'
     volumes:
-      - ./ui/:/app
+      - ./conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - api
   
   api:
     build: api/
     command: gtasks-api
-    ports:
-      - '2345:2345'
     volumes:
       - ./sandbox/db:/db
-
-  # web:

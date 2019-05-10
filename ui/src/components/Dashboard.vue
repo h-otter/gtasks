@@ -122,43 +122,7 @@ export default {
   },
   data: () => ({
     status: ["ToDo", "Doing", "Done"],
-    tasks: {
-      1: {
-        title: "testing",
-        state: "Doing",
-        // category: "",
-        labels: {
-          "test-label": "hoge",
-        },
-        description: "foobar",
-        dueDate: new Date().toISOString().substr(0, 10),
-        dependsOn: [
-          2,
-        ],
-      },
-      3: {
-        title: "ToDo",
-        state: "ToDo",
-        labels: {
-          "test-label": "hoge",
-        },
-        description: "foobar",
-        dueDate: new Date().toISOString().substr(0, 10),
-        dependsOn: [
-          1,
-        ],
-      },
-      2: {
-        title: "changed",
-        state: "Done",
-        labels: {
-          "test-label": "hoge",
-        },
-        description: "foobar",
-        dueDate: new Date().toISOString().substr(0, 10),
-        dependsOn: [],
-      },
-    },
+    tasks: {},
     paths: [],
 
     circleMargin: 5,
@@ -185,7 +149,13 @@ export default {
     },
     toggleIsSelected: function (id) {
       if (this.isSelected) {
+        var axios = require("axios")
+
         // PUT: 失敗したら中断
+        axios
+          .put("http://127.0.0.1:12345/api/task/"+id, this.tasks[id])
+          .then(response => {})
+
         this.setGraphCoordinate()
       }
 
@@ -228,8 +198,10 @@ export default {
           g.setParent(n, (d.getMonth() + 1)+"-"+d.getFullYear());
         }
 
-        for (var e of this.tasks[n].dependsOn) {
-          g.setEdge(e, n)
+        if (this.tasks[n].dependsOn) {
+          for (var e of this.tasks[n].dependsOn) {
+            g.setEdge(e, n)
+          }
         }
       }
 
@@ -253,8 +225,17 @@ export default {
   },
   mounted: function() {
     // list all
+    var axios = require("axios")
+    axios
+      .get("http://127.0.0.1:12345/api/task/")
+      .then(response => {
+        this.tasks = {}
+        for (var r of response.data) {
+          this.tasks[r.id] = r
+        }
 
-    this.setGraphCoordinate()
+        this.setGraphCoordinate()
+      })
   },
 }
 </script>
