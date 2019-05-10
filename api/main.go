@@ -15,10 +15,10 @@ import (
 type Task struct {
 	ID          int               `json:"id"`
 	State       string            `json:"state"`
-	Labels      map[string]string `json:"labels"`
-	Description string            `json:"description"`
-	DueDate     string            `json:"due_date"`
-	DependsOn   []int             `json:"depends_on"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Description string            `json:"description,omitempty"`
+	DueDate     string            `json:"due_date,omitempty"`
+	DependsOn   []int             `json:"depends_on,omitempty"`
 }
 
 type TaskHandler struct {
