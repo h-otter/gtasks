@@ -1,5 +1,17 @@
-# app
+# gtasks
 
+A ToDo application which shows as graph
+
+## How to develop
+
+```sh
+docker-compose up
+```
+
+listen on http://localhost:1234
+
+
+<!-- 
 ## Project setup
 ```
 yarn install
@@ -26,4 +38,4 @@ yarn run lint
 ```
 
 ### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+See [Configuration Reference](https://cli.vuejs.org/config/). -->
