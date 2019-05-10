@@ -5,8 +5,8 @@
     :cx="x"
     :cy="y"
     :class="{'selected': isSelected}"
-    v-on:mouseover="$emit('mouseOver', key)"
-    v-on:click="$emit('click', key)"
+    v-on:mouseover="$emit('mouseOver')"
+    v-on:click="$emit('click')"
     v-bind:style="{'fill': color}"
   ></circle>
 </template>
