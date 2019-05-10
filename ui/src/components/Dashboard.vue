@@ -145,7 +145,7 @@ export default {
         description: "foobar",
         dueDate: new Date().toISOString().substr(0, 10),
         dependsOn: [
-          2,
+          1,
         ],
       },
       2: {
@@ -184,6 +184,11 @@ export default {
       }
     },
     toggleIsSelected: function (id) {
+      if (this.isSelected) {
+        // PUT: 失敗したら中断
+        this.setGraphCoordinate()
+      }
+
       this.isSelected = !this.isSelected
 
       if (this.isSelected) {
@@ -208,7 +213,7 @@ export default {
     // },
     setGraphCoordinate: function() {
       var dagre = require("dagre");
-      var g = new dagre.graphlib.Graph();
+      var g = new dagre.graphlib.Graph({ compound: true });
       g.setGraph({});
       g.setDefaultEdgeLabel(function() { return {}; });
 
@@ -218,7 +223,10 @@ export default {
       for (var n in this.tasks) {
         g.setNode(n, { label: this.tasks[n].title, width: l, height: l });
 
-        // g.setParent(n, month+"-"+category);
+        if (this.tasks[n].dueDate) {
+          var d = new Date(this.tasks[n].dueDate)
+          g.setParent(n, (d.getMonth() + 1)+"-"+d.getFullYear());
+        }
 
         for (var e of this.tasks[n].dependsOn) {
           g.setEdge(e, n)
@@ -244,6 +252,8 @@ export default {
     }
   },
   mounted: function() {
+    // list all
+
     this.setGraphCoordinate()
   },
 }
