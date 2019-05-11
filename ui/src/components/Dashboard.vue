@@ -4,6 +4,7 @@
     <v-navigation-drawer
       fixed
       v-model="drawerRight"
+      v-if="tasks[viewingTaskID]"
       right
       clipped
       app
@@ -82,7 +83,7 @@
 
     <v-content>
       <v-container fluid fill-height>
-        <v-layout justify-left align-top>
+        <v-layout justify-left align-top v-on:click.self="selectTask(null)">
           <svg :width="this.graphWidth" :height="this.graphHeight">
             <!-- dependency line -->
             <task-path v-for="(points, index) in paths"
@@ -95,8 +96,7 @@
               :radius="circleRadius"
               v-bind:x="tasks[id].x"
               v-bind:y="tasks[id].y"
-              v-on:mouseOver="updateViewingTask(id)"
-              v-on:click="toggleIsSelected(id)"
+              v-on:click="selectTask(id)"
               v-bind:isSelected="isSelected && viewingTaskID == id"
               v-bind:color="stateToColor(tasks[id].state)"
             ></task-circle>
@@ -142,28 +142,20 @@ export default {
     source: String
   },
   methods: {
-    updateViewingTask: function (id) {
-      if (!this.isSelected) {
-        this.viewingTaskID = id
-      }
-    },
-    toggleIsSelected: function (id) {
-      if (this.isSelected) {
+    selectTask: function (id) {
+      if (this.viewingTaskID != id && this.viewingTaskID) {
         var axios = require("axios")
 
         // PUT: 失敗したら中断
         axios
-          .put("http://127.0.0.1:12345/api/task/"+id, this.tasks[id])
+          .put("http://127.0.0.1:12345/api/task/"+this.viewingTaskID, this.tasks[this.viewingTaskID])
           .then(response => {})
 
         this.setGraphCoordinate()
       }
 
-      this.isSelected = !this.isSelected
-
-      if (this.isSelected) {
-        this.viewingTaskID = id
-      }
+      this.isSelected = !!id;
+      this.viewingTaskID = this.isSelected ? id : null;
     },
     stateToColor: function(state) {
       switch (state) {
@@ -232,6 +224,10 @@ export default {
         this.tasks = {}
         for (var r of response.data) {
           this.tasks[r.id] = r
+        }
+
+        if (!this.tasks[this.viewingTaskID]) {
+          this.viewingTaskID = 0;
         }
 
         this.setGraphCoordinate()
