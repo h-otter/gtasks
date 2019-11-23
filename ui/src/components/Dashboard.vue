@@ -82,27 +82,35 @@
 
     <v-content>
       <v-container fluid fill-height>
-        <v-layout justify-left align-top>
-          <svg :width="this.graphWidth" :height="this.graphHeight">
-            <!-- dependency line -->
-            <task-path v-for="(points, index) in paths"
-              :key="'task-path-'+index"
-              v-bind:points="points"
-            ></task-path>
-            <!-- tasks -->
-            <task-circle v-for="(value, id) in tasks"
-              :key="'task-circle-'+id"
-              :radius="circleRadius"
-              v-bind:x="tasks[id].x"
-              v-bind:y="tasks[id].y"
-              v-on:mouseOver="updateViewingTask(id)"
-              v-on:click="toggleIsSelected(id)"
-              v-bind:isSelected="isSelected && viewingTaskID == id"
-              v-bind:color="stateToColor(tasks[id].state)"
-            ></task-circle>
+        <v-layout class="main-layout" justify-left align-top>
+          <div class="main-content" id="background" :style="{ gridTemplateRows: gridTemplateRowsJoined }">
+            <template v-for="(value, index) in graphHeightByMonth">
+              <div class="head" :class="[ index % 2 == 1 ? 'odd' : 'even']" :style="{ gridRow: (index + 1) + '/ span 1', gridColumn: '1 / span 1'}">{{ value.year }}/{{ value.month }}</div>
+              <div class="content" :class="[ index % 2 == 1 ? 'odd' : 'even']" :style="{ gridRow: (index + 1) + '/ span 1', gridColumn: '2 / span 1'}"></div>
+            </template>
+          </div>
+          <div class="main-content" id="graph">
+            <svg :width="this.graphWidth" :height="this.graphHeight">
+              <!-- dependency line -->
+              <task-path v-for="(points, index) in paths"
+                :key="'task-path-'+index"
+                v-bind:points="points"
+              ></task-path>
+              <!-- tasks -->
+              <task-circle v-for="(value, id) in tasks"
+                :key="'task-circle-'+id"
+                :radius="circleRadius"
+                v-bind:x="tasks[id].x"
+                v-bind:y="tasks[id].y"
+                v-on:mouseOver="updateViewingTask(id)"
+                v-on:click="toggleIsSelected(id)"
+                v-bind:isSelected="isSelected && viewingTaskID == id"
+                v-bind:color="stateToColor(tasks[id].state)"
+              ></task-circle>
 
-            <!-- month line -->
-          </svg>
+              <!-- month line -->
+            </svg>
+          </div>
         </v-layout>
       </v-container>
     </v-content>
@@ -129,6 +137,7 @@ export default {
     circleRadius: 15,
     graphWidth: 100,
     graphHeight: 100,
+    graphHeightByMonth: [],
 
     drawerLeft: false,
     drawerRight: true,
@@ -138,6 +147,11 @@ export default {
     viewingTaskID: 1,
     isSelected: false,
   }),
+  computed: {
+    gridTemplateRowsJoined: function() {
+      return this.graphHeightByMonth.map(x => x.height + "px").join(" ");
+    }
+  },
   props: {
     source: String
   },
@@ -189,16 +203,24 @@ export default {
 
       // g.setParent(month+"-"+category, month);
 
-      var l = 2 * this.circleRadius + 10
-      for (var n in this.tasks) {
-        g.setNode(n, { label: this.tasks[n].title, width: l, height: l });
+      const groupNameOfTask = (task) => {
+        const d = new Date(task.dueDate);
+        const name = `${d.getMonth() + 1}-${d.getFullYear()}`;
+        g.setNode(name, { label: name, width: 500, height: 100 });
 
-        if (this.tasks[n].dueDate) {
-          var d = new Date(this.tasks[n].dueDate)
-          g.setParent(n, (d.getMonth() + 1)+"-"+d.getFullYear());
+        return name;
+      }
+
+      const l = 2 * this.circleRadius + 10
+      for (const n in this.tasks) {
+        const task = this.tasks[n];
+        g.setNode(n, { label: task.title, width: l, height: l });
+
+        if (task.dueDate) {
+          g.setParent(n, groupNameOfTask(task));
         }
 
-        if (this.tasks[n].dependsOn) {
+        if (task.dependsOn) {
           for (var e of this.tasks[n].dependsOn) {
             g.setEdge(e, n)
           }
@@ -207,20 +229,65 @@ export default {
 
       dagre.layout(g);
 
-      for (var n in this.tasks) {
+      for (let n in this.tasks) {
         this.tasks[n].x = g.node(n).x
         this.tasks[n].y = g.node(n).y
         // console.log("Node " + n + ": " + JSON.stringify(this.tasks[n]));
       }
 
       this.paths = []
-      for (var e of g.edges()) {
+      for (const e of g.edges()) {
         this.paths.push(g.edge(e).points)
         // console.log("Edge " + e.v + " -> " + e.w + ": " + JSON.stringify(g.edge(e)));
       }
 
       this.graphWidth = g.graph().width
       this.graphHeight = g.graph().height
+
+      this.updateGraphHeightByMonth();
+    },
+    updateGraphHeightByMonth: function() {
+      let minDate = null;
+      let maxDate = null;
+      for (const n in this.tasks) {
+        const task = this.tasks[n];
+        if (!task.dueDate) { continue; }
+
+        const d = new Date(task.dueDate);
+        const fd = new Date(d.getFullYear(), d.getMonth(), 1); // first day of month
+
+        if (!minDate) {
+          minDate = fd;
+          maxDate = fd;
+        }
+        if (fd < minDate) {
+          minDate = fd;
+        } else if (maxDate < fd) {
+          maxDate = fd;
+        }
+      }
+
+      if (!minDate) {
+        // dueDate is not set in all tasks
+        this.graphHeightByMonth = [];
+      }
+
+      const getFirstDayOfNextMonth = (d) => {
+        if (d.getMonth() == 11) {
+          return new Date(d.getFullYear() + 1, 0, 1);
+        }
+        return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      }
+
+      let d = minDate;
+      let graphHeightByMonth = []
+      do {
+        // TODO: get appropriate height
+        console.log({ year: d.getFullYear(), month: d.getMonth() + 1, height: 100})
+        graphHeightByMonth.push({ year: d.getFullYear(), month: d.getMonth() + 1, height: 100});
+        d = getFirstDayOfNextMonth(d);
+      } while (d.getTime() <= maxDate.getTime());
+      this.graphHeightByMonth = graphHeightByMonth
     }
   },
   mounted: function() {
@@ -241,5 +308,33 @@ export default {
 </script>
 
 <style>
+.main-layout {
+  position: relative;
+}
 
+.main-content {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  width: 100%;
+}
+
+.main-content#background .odd {
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.main-content#background .head {
+  border-right: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+.main-content#graph {
+  grid-template-rows: 1fr;
+  grid-template-areas: "unused graph";
+}
+
+.main-content#graph > svg {
+  grid-area: graph;
+}
 </style>
